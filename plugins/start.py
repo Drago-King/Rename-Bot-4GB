@@ -56,7 +56,7 @@ async def start(client, message):
     return
 
 
-@Client.on_message((filters.private & (filters.document | filters.audio | filters.video)) | filters.channel & (filters.document | filters.audio | filters.video))
+@Client.on_message(filters.private & (filters.document | filters.audio | filters.video))
 async def send_doc(client, message):
     user_id = message.chat.id
     old = insert(int(user_id))
