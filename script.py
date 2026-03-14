@@ -1,66 +1,61 @@
 class script(object):
     HELP_TXT = """<b>Hey</b> {}
-    
-<b>Here Is The Help For My Commands.</b>"""
 
-    CAPTION_TXT = """<b><u>📝  HOW TO SET CAPTION</u></b>
+<b>Here Are The Available Commands:</b>
 
-<b>⦿ /set_caption - Use This Command To Set Your Caption</b>
-<b>⦿ /see_caption - Use This Command To See Your Caption</b>
-<b>⦿ /del_caption - Use This Command To Delete Your Caption</b>"""
-   
-    THUMBNAIL_TXT = """<b><u>🖼️  HOW TO SET THUMBNAIL</u></b>
+<b>⦿ /rename</b> - Send a file to rename it
+<b>⦿ /addthumb</b> - Send a photo to set thumbnail
+<b>⦿ /viewthumb</b> - View your saved thumbnail
+<b>⦿ /delthumb</b> - Delete your thumbnail
+<b>⦿ /set_caption</b> - Set custom caption
+<b>⦿ /see_caption</b> - View your caption
+<b>⦿ /del_caption</b> - Delete your caption
+<b>⦿ /metadata</b> - Set metadata for files
+<b>⦿ /addchannel</b> - Link a channel for auto-rename
+<b>⦿ /removechannel</b> - Unlink a channel
+<b>⦿ /chformat</b> - Set channel output format
+<b>⦿ /chtemplate</b> - Set channel rename template"""
 
-<b>⦿ You Can Add Custom Thumbnail Simply By Sending A Photo To Me....</b>
+    CAPTION_TXT = """<b><u>📝 HOW TO SET CAPTION</u></b>
 
-<b>⦿ /viewthumb - Use This Command To See Your Thumbnail</b>
-<b>⦿ /delthumb - Use This Command To Delete Your Thumbnail</b>"""
+<b>⦿ /set_caption</b> - Set your caption
+<b>⦿ /see_caption</b> - View your caption
+<b>⦿ /del_caption</b> - Delete your caption
 
-    ABOUT_TXT = """<b>🤖 My Name :</b> {}
-<b>📝 Language :</b> <a href='https://python.org'>Python 3</a>
-<b>📚 Library :</b> <a href='https://pyrogram.org'>Pyrogram 2.0</a>
-<b>🚀 Server :</b> <a href='https://heroku.com'>Heroku</a>
-<b>📢 Channel :</b> <a href='https://t.me/Madflix_Bots'>Madflix Botz</a>
-<b>🧑‍💻 Developer :</b> <a href='https://t.me/CallAdminRobot'>Jishu Developer</a>
+<b>Placeholders:</b>
+<code>{filename}</code> - File name
+<code>{filesize}</code> - File size
+<code>{duration}</code> - Duration (video/audio)"""
 
-<b>♻️ Bot Made By :</b> @Madflix_Bots"""
+    THUMBNAIL_TXT = """<b><u>🖼️ HOW TO SET THUMBNAIL</u></b>
 
-    DONATE_TXT = """
-<b>🥲 Thanks For Showing Interest In Donation! ❤️</b>
+<b>⦿ Simply send a photo to set it as thumbnail</b>
 
-If You Like My Bots & Projects, You Can 🎁 Donate Me Any Amount From 10 Rs Upto Your Choice.
+<b>⦿ /viewthumb</b> - View your thumbnail
+<b>⦿ /delthumb</b> - Delete your thumbnail"""
 
-<b>🛍 UPI ID:</b> <code>madflixofficial@axl</code> 
+    ABOUT_TXT = """<b>🤖 Bot:</b> {}
+<b>📝 Language:</b> <a href='https://python.org'>Python 3</a>
+<b>📚 Library:</b> <a href='https://pyrogram.org'>Pyrogram 2.0</a>
+<b>🧑‍💻 Owner:</b> <a href='https://t.me/Poseidon_xd'>Aqil</a>"""
 
-<b>📸 Send Screenshot After Donation To Activate Your Premium Plan </b> """
+    DONATE_TXT = """<b>Contact owner for premium plans.</b>
 
-    ADMIN_TXT = """<b><u>🦋 ADMIN ALL COMMANDS HERE</u></b>
+<b>🧑‍💻 Owner:</b> <a href='https://t.me/Poseidon_xd'>Aqil</a>"""
 
-<b>⦿ /users - Use This Command To See Total Users</b>
-<b>⦿ /allids - Use This Command To See All Users IDs</b>
-<b>⦿ /broadcast - Use This Command To Send A Message To Users</b>
-<b>⦿ /warn - Use This Command To Send A Message To A User</b>
-<b>⦿ /resetpower - Use This Command To Reset User Power</b>
-<b>⦿ /ceasepower - Use This Command To Cease User Power</b>
-<b>⦿ /addpremium - Use This Command To Add Premium To Users</b>
-<b>⦿ /restart - Use This Command To Cancel All Process And Restart The Bot</b>"""
+    ADMIN_TXT = """<b><u>🦋 ADMIN COMMANDS</u></b>
 
+<b>⦿ /users</b> - Total users
+<b>⦿ /allids</b> - All user IDs
+<b>⦿ /broadcast</b> - Broadcast a message
+<b>⦿ /warn</b> - Warn a user
+<b>⦿ /resetpower</b> - Reset user power
+<b>⦿ /ceasepower</b> - Cease user power
+<b>⦿ /addpremium</b> - Add premium to user
+<b>⦿ /restart</b> - Restart the bot"""
 
-    METADATA_TXT = """<b><u>🖼️  HOW TO SET CUSTOM METADATA</u></b>
+    METADATA_TXT = """<b><u>🖼️ SET CUSTOM METADATA</u></b>
 
-For Example :-
+Send your metadata text below.
 
-<code>By @Madflix_Bots</code>
-
-💬 For Any Help Contact @MadflixOfficials
-"""
-
-
-
-
-
-
-# Jishu Developer 
-# Don't Remove Credit 🥺
-# Telegram Channel @Madflix_Bots
-# Developer @JishuDeveloper
+Example: <code>@Poseidon_xd</code>"""
