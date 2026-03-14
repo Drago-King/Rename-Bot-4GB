@@ -1,8 +1,8 @@
 from datetime import date as date_
-import os, re, datetime, random, asyncio, time, humanize
+import os, datetime, asyncio, time, humanize
 from script import *
 from pyrogram.errors.exceptions.bad_request_400 import UserNotParticipant
-from pyrogram import Client, filters, enums
+from pyrogram import Client, filters
 from pyrogram.types import (InlineKeyboardButton, InlineKeyboardMarkup)
 from helper.progress import humanbytes
 from helper.database import botdata, find_one, total_user
@@ -19,12 +19,7 @@ botid = token.split(':')[0]
 @Client.on_message(filters.private & filters.command(["start"]))
 async def start(client, message):
     user_id = message.chat.id
-    old = insert(int(user_id))
-
-    try:
-        id = message.text.split(' ')[1]
-    except IndexError:
-        id = None
+    insert(int(user_id))
 
     loading_sticker_message = await message.reply_sticker("CAACAgIAAxkBAALmzGXSSt3ppnOsSl_spnAP8wHC26jpAAJEGQACCOHZSVKp6_XqghKoHgQ")
     await asyncio.sleep(2)
@@ -53,32 +48,55 @@ async def start(client, message):
         reply_markup=button,
         quote=True
     )
-    return
 
 
 @Client.on_message(filters.private & (filters.document | filters.audio | filters.video))
 async def send_doc(client, message):
-    user_id = message.chat.id
-    old = insert(int(user_id))
-
     user_id = message.from_user.id
+    insert(int(user_id))
+
+    # Force sub check
     if FORCE_SUBS:
         try:
             await client.get_chat_member(FORCE_SUBS, user_id)
         except UserNotParticipant:
-            _newus = find_one(message.from_user.id)
-            user = _newus["usertype"]
-            await message.reply_text("<b>You Need To Join My Channel To Use Me</b>",
-                                     reply_to_message_id=message.id,
-                                     reply_markup=InlineKeyboardMarkup([
-                                         [InlineKeyboardButton("🔺 Join Channel 🔺", url=f"https://t.me/{FORCE_SUBS}")]
-                                     ]))
+            await message.reply_text(
+                "<b>Please join my channel to use this bot.</b>",
+                reply_to_message_id=message.id,
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("🔺 Join Channel", url=f"https://t.me/{FORCE_SUBS}")]
+                ]))
             return
 
     botdata(int(botid))
     bot_data = find_one(int(botid))
     prrename = bot_data['total_rename']
     prsize = bot_data['total_size']
+
+    media = await client.get_messages(message.chat.id, message.id)
+    file = media.document or media.video or media.audio
+    dcid = FileId.decode(file.file_id).dc_id
+    filename = file.file_name
+    filesize = humanize.naturalsize(file.file_size)
+
+    # ── Admin bypasses ALL limits ──────────────────────────────────────────────
+    if user_id == ADMIN:
+        total_rename(int(botid), prrename)
+        total_size(int(botid), prsize, file.file_size)
+        await message.reply_text(
+            f"__What Do You Want Me To Do With This File ?__\n\n"
+            f"**File Name :** `{filename}`\n"
+            f"**File Size :** {filesize}\n"
+            f"**DC ID :** {dcid}",
+            reply_to_message_id=message.id,
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("📝 Rename", callback_data="rename"),
+                 InlineKeyboardButton("✖️ Cancel", callback_data="cancel")]
+            ])
+        )
+        return
+
+    # ── Normal user flow ───────────────────────────────────────────────────────
     user_deta = find_one(user_id)
     used_date = user_deta["date"]
     buy_date = user_deta["prexdate"]
@@ -86,73 +104,85 @@ async def send_doc(client, message):
     user_type = user_deta["usertype"]
 
     c_time = time.time()
-
-    if user_type == "Free":
-        LIMIT = 120
-    else:
-        LIMIT = 10
+    LIMIT = 10 if user_type != "Free" else 120
     then = used_date + LIMIT
     left = round(then - c_time)
-    conversion = datetime.timedelta(seconds=left)
-    ltime = str(conversion)
-    if left > 0:
-        await message.reply_text(f"<b>⏳ Flood Control Active\n\nPlease wait {ltime}</b>", reply_to_message_id=message.id)
-    else:
-        media = await client.get_messages(message.chat.id, message.id)
-        file = media.document or media.video or media.audio
-        dcid = FileId.decode(file.file_id).dc_id
-        filename = file.file_name
-        file_id = file.file_id
-        value = 2147483648
-        used_ = find_one(message.from_user.id)
-        used = used_["used_limit"]
-        limit = used_["uploadlimit"]
-        expi = daily - int(time.mktime(time.strptime(str(date_.today()), '%Y-%m-%d')))
-        if expi != 0:
-            today = date_.today()
-            pattern = '%Y-%m-%d'
-            epcho = int(time.mktime(time.strptime(str(today), pattern)))
-            daily_(message.from_user.id, epcho)
-            used_limit(message.from_user.id, 0)
-        remain = limit - used
-        if remain < int(file.file_size):
-            await message.reply_text(f"Daily limit exhausted.\n\n<b>File Size:</b> {humanbytes(file.file_size)}\n<b>Used:</b> {humanbytes(used)}\n<b>Remaining:</b> {humanbytes(remain)}",
-                                     reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💳 Upgrade", callback_data="upgrade")]]))
-            return
-        if value < file.file_size:
-            if STRING_SESSION:
-                if buy_date == None:
-                    await message.reply_text("Files over 2GB require a premium plan.",
-                                             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💳 Upgrade", callback_data="upgrade")]]))
-                    return
-                pre_check = check_expi(buy_date)
-                if pre_check == True:
-                    await message.reply_text(f"""__What Do You Want Me To Do With This File ?__\n\n**File Name :** `{filename}`\n**File Size :** {humanize.naturalsize(file.file_size)}\n**DC ID :** {dcid}""",
-                                             reply_to_message_id=message.id,
-                                             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📝 Rename", callback_data="rename"), InlineKeyboardButton("✖️ Cancel", callback_data="cancel")]]))
-                    total_rename(int(botid), prrename)
-                    total_size(int(botid), prsize, file.file_size)
-                else:
-                    uploadlimit(message.from_user.id, 2147483648)
-                    usertype(message.from_user.id, "Free")
-                    await message.reply_text(f'Your plan expired on {buy_date}', quote=True)
-                    return
-            else:
-                await message.reply_text("Files over 2GB require a premium plan.",
-                                         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("💳 Upgrade", callback_data="upgrade")]]))
-                return
-        else:
-            if buy_date:
-                pre_check = check_expi(buy_date)
-                if pre_check == False:
-                    uploadlimit(message.from_user.id, 2147483648)
-                    usertype(message.from_user.id, "Free")
 
-            filesize = humanize.naturalsize(file.file_size)
-            total_rename(int(botid), prrename)
-            total_size(int(botid), prsize, file.file_size)
-            await message.reply_text(f"""__What Do You Want Me To Do With This File ?__\n\n**File Name :** `{filename}`\n**File Size :** {filesize}\n**DC ID :** {dcid}""",
-                                     reply_to_message_id=message.id,
-                                     reply_markup=InlineKeyboardMarkup(
-                                         [[InlineKeyboardButton("📝 Rename", callback_data="rename"),
-                                           InlineKeyboardButton("✖️ Cancel", callback_data="cancel")]]))
+    if left > 0:
+        ltime = str(datetime.timedelta(seconds=left))
+        await message.reply_text(
+            f"<b>⏳ Please wait {ltime}</b>",
+            reply_to_message_id=message.id
+        )
+        return
+
+    used_ = find_one(user_id)
+    used = used_["used_limit"]
+    limit = used_["uploadlimit"]
+    expi = daily - int(time.mktime(time.strptime(str(date_.today()), '%Y-%m-%d')))
+    if expi != 0:
+        today = date_.today()
+        epcho = int(time.mktime(time.strptime(str(today), '%Y-%m-%d')))
+        daily_(user_id, epcho)
+        used_limit(user_id, 0)
+        used = 0
+
+    remain = limit - used
+    if remain < int(file.file_size):
+        await message.reply_text(
+            f"Daily limit exhausted.\n\n"
+            f"<b>File Size:</b> {humanbytes(file.file_size)}\n"
+            f"<b>Used:</b> {humanbytes(used)}\n"
+            f"<b>Remaining:</b> {humanbytes(remain)}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("💳 Upgrade", callback_data="upgrade")]
+            ])
+        )
+        return
+
+    value = 2147483648
+    if value < file.file_size:
+        if STRING_SESSION and buy_date:
+            from helper.date import check_expi
+            if check_expi(buy_date):
+                total_rename(int(botid), prrename)
+                total_size(int(botid), prsize, file.file_size)
+                await message.reply_text(
+                    f"__What Do You Want Me To Do With This File ?__\n\n"
+                    f"**File Name :** `{filename}`\n**File Size :** {filesize}\n**DC ID :** {dcid}",
+                    reply_to_message_id=message.id,
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("📝 Rename", callback_data="rename"),
+                         InlineKeyboardButton("✖️ Cancel", callback_data="cancel")]
+                    ])
+                )
+            else:
+                uploadlimit(user_id, 2147483648)
+                usertype(user_id, "Free")
+                await message.reply_text(f'Your plan expired on {buy_date}', quote=True)
+        else:
+            await message.reply_text(
+                "Files over 2GB require a premium plan.",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("💳 Upgrade", callback_data="upgrade")]
+                ])
+            )
+        return
+
+    if buy_date:
+        from helper.date import check_expi
+        if not check_expi(buy_date):
+            uploadlimit(user_id, 2147483648)
+            usertype(user_id, "Free")
+
+    total_rename(int(botid), prrename)
+    total_size(int(botid), prsize, file.file_size)
+    await message.reply_text(
+        f"__What Do You Want Me To Do With This File ?__\n\n"
+        f"**File Name :** `{filename}`\n**File Size :** {filesize}\n**DC ID :** {dcid}",
+        reply_to_message_id=message.id,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("📝 Rename", callback_data="rename"),
+             InlineKeyboardButton("✖️ Cancel", callback_data="cancel")]
+        ])
+    )
