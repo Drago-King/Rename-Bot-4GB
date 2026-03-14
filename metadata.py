@@ -2,13 +2,10 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from helper.database import *
 try:
-    from pyromod.exceptions import ListenerTimeout
-except ImportError:
-    try:
-        from pyromod.listen import ListenerTimeout
-    except ImportError:
-        class ListenerTimeout(Exception):
-            pass
+    from pyromod.listen import ListenerTimeout
+except:
+    class ListenerTimeout(Exception):
+        pass
 from script import *
 
 
