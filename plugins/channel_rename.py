@@ -56,7 +56,8 @@ async def add_channel(client: Client, message: Message):
     args = message.command
     if len(args) < 2:
         return await message.reply_text(
-            "❌ Usage: /addchannel <@username or channel_id>\n\n"
+            "❌ Usage: /addchannel <@username or chat_id>\n\n"
+            "Works for both channels and groups.\n"
             "Example: /addchannel @MyChannel\n\n"
             "Make sure bot is admin with Post & Delete permissions."
         )
@@ -189,7 +190,7 @@ async def my_channels(client: Client, message: Message):
 
 # ─── Channel Post Handler ─────────────────────────────────────────────────────
 
-@Client.on_message(filters.channel)
+@Client.on_message(filters.channel | (filters.group & (filters.document | filters.video | filters.audio)))
 async def channel_auto_rename(client: Client, message: Message):
     channel_id = message.chat.id
     s = get_channel_settings(channel_id)
@@ -311,7 +312,7 @@ async def channel_auto_rename(client: Client, message: Message):
         try:
             await client.delete_messages(channel_id, message.id)
         except Exception:
-            pass
+            pass  # Bot may not have delete permission in groups
 
     except Exception as e:
         pass
