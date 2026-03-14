@@ -1,7 +1,7 @@
+import pyromod.listen
 from pyrogram import Client, idle
 from plugins.cb_data import app as Client2
 from config import *
-import pyromod
 import pyrogram.utils
 
 pyrogram.utils.MIN_CHAT_ID = -999999999999
