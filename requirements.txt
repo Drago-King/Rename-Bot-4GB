@@ -1,5 +1,5 @@
 pyrogram==2.0.83
-pyromod==0.1.0
+pyromod==1.5
 humanize==4.9.0
 pymongo==4.6.1
 Pillow==10.2.0
