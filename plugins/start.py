@@ -55,6 +55,14 @@ async def send_doc(client, message):
     user_id = message.from_user.id
     insert(int(user_id))
 
+    # Skip if autorename is active
+    try:
+        from plugins.autorename import get_ar
+        if get_ar(user_id).get("enabled"):
+            return
+    except Exception:
+        pass
+
     # Force sub check
     if FORCE_SUBS:
         try:
