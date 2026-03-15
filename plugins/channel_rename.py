@@ -1,9 +1,4 @@
 # Channel & Group Auto-Rename Plugin
-# - Original caption preserved
-# - Thumbnail swapped with owner's saved thumb
-# - Format: document or video (per channel)
-# - Template rename (optional)
-# - Queue: one file at a time, safe for bulk posts
 
 import os
 import time
@@ -20,20 +15,6 @@ mongo = pymongo.MongoClient(DATABASE_URL)
 db = mongo[DATABASE_NAME]
 ch_col = db["channel_settings"]
 users_col = db["user"]
-
-# ─── Queue ────────────────────────────────────────────────────────────────────
-_queue = asyncio.Queue()
-
-async def _queue_worker():
-    while True:
-        fn, args, kwargs = await _queue.get()
-        try:
-            await fn(*args, **kwargs)
-        except Exception as e:
-            print(f"[RenameQueue Error] {e}")
-        finally:
-            _queue.task_done()
-        await asyncio.sleep(0.5)
 
 # ─── DB Helpers ───────────────────────────────────────────────────────────────
 
@@ -188,16 +169,22 @@ async def my_channels(client: Client, message: Message):
     await message.reply_text(text)
 
 
-# ─── Core Rename Logic ────────────────────────────────────────────────────────
+# ─── Handler ──────────────────────────────────────────────────────────────────
 
-async def _do_rename(client: Client, message: Message):
+@Client.on_message(
+    filters.channel |
+    (filters.group & (filters.document | filters.video | filters.audio))
+)
+async def channel_auto_rename(client: Client, message: Message):
     channel_id = message.chat.id
     s = get_channel_settings(channel_id)
 
     if not s.get("enabled"):
         return
 
-    # Detect file
+    if not (message.document or message.video or message.audio):
+        return
+
     file = None
     orig_name = None
 
@@ -216,7 +203,6 @@ async def _do_rename(client: Client, message: Message):
     original_caption = message.caption or None
     template = s.get("template")
     new_name = apply_template(template, orig_name) if template else orig_name
-
     fmt = s.get("format", "document")
     send_as_video = (fmt == "video")
 
@@ -232,7 +218,6 @@ async def _do_rename(client: Client, message: Message):
         use_metadata = user_data.get("metadata", False)
         metadata_code = user_data.get("metadata_code")
 
-    # Download
     os.makedirs("downloads", exist_ok=True)
     safe_name = new_name.replace("/", "_").replace("\0", "_")
     file_path = f"downloads/{int(time.time())}_{safe_name}"
@@ -243,7 +228,6 @@ async def _do_rename(client: Client, message: Message):
         print(f"[Download Error] {e}")
         return
 
-    # Metadata
     final_path = path
     if use_metadata and metadata_code:
         os.makedirs("Metadata", exist_ok=True)
@@ -254,7 +238,6 @@ async def _do_rename(client: Client, message: Message):
         except Exception:
             final_path = path
 
-    # Thumbnail
     if thumb_file_id:
         try:
             ph_path = await client.download_media(thumb_file_id)
@@ -264,7 +247,6 @@ async def _do_rename(client: Client, message: Message):
         except Exception:
             ph_path = None
 
-    # Upload
     try:
         if send_as_video:
             await client.send_video(
@@ -300,20 +282,3 @@ async def _do_rename(client: Client, message: Message):
                     os.remove(p)
                 except Exception:
                     pass
-
-
-# ─── Handler ──────────────────────────────────────────────────────────────────
-
-@Client.on_message(
-    filters.channel |
-    (filters.group & (filters.document | filters.video | filters.audio))
-)
-async def channel_auto_rename(client: Client, message: Message):
-    s = get_channel_settings(message.chat.id)
-    if not s.get("enabled"):
-        return
-    if not (message.document or message.video or message.audio):
-        return
-    await _queue.put((_do_rename, (client, message), {}))
-
-
