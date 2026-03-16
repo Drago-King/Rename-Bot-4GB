@@ -14,7 +14,7 @@ from config import *
 
 # Only create user client if STRING_SESSION is set
 if STRING_SESSION:
-    app = Client("Aqil", api_id=API_ID, api_hash=API_HASH, session_string=STRING_SESSION)
+    app = Client("JishuBotz", api_id=API_ID, api_hash=API_HASH, session_string=STRING_SESSION)
 else:
     app = None
 
@@ -75,15 +75,21 @@ async def doc(bot, update):
     total_used = used + int(file.file_size)
     used_limit(update.from_user.id, total_used)
 
+    os.makedirs("downloads", exist_ok=True)
     try:
         path = await bot.download_media(
             message=file,
+            file_name=file_path,
             progress=progress_for_pyrogram,
             progress_args=("🚀 Downloading...  ⚡", ms, c_time)
         )
     except Exception as e:
         used_limit(update.from_user.id, used)
         await ms.edit(str(e))
+        return
+
+    if not path or not os.path.exists(path):
+        await ms.edit("❌ Download failed.")
         return
 
     # Metadata
@@ -95,13 +101,7 @@ async def doc(bot, update):
     else:
         await ms.edit("🚀 Processing...  ⚡")
 
-    # Rename downloaded file
-    try:
-        os.rename(path, file_path)
-    except Exception:
-        file_path = path
-
-    final_path = metadata_path if _bool_metadata and os.path.exists(metadata_path) else file_path
+    final_path = metadata_path if _bool_metadata and os.path.exists(metadata_path) else path
 
     # Caption
     user_id = int(update.message.chat.id)
@@ -175,12 +175,17 @@ async def vid(bot, update):
     try:
         path = await bot.download_media(
             message=file,
+            file_name=file_path,
             progress=progress_for_pyrogram,
             progress_args=("🚀 Downloading...  ⚡", ms, c_time)
         )
     except Exception as e:
         used_limit(update.from_user.id, used)
         await ms.edit(str(e))
+        return
+
+    if not path or not os.path.exists(path):
+        await ms.edit("❌ Download failed.")
         return
 
     # Metadata
@@ -192,12 +197,7 @@ async def vid(bot, update):
     else:
         await ms.edit("🚀 Processing...  ⚡")
 
-    try:
-        os.rename(path, file_path)
-    except Exception:
-        file_path = path
-
-    final_path = metadata_path if _bool_metadata and os.path.exists(metadata_path) else file_path
+    final_path = metadata_path if _bool_metadata and os.path.exists(metadata_path) else path
 
     # Duration
     duration = 0
@@ -294,12 +294,17 @@ async def aud(bot, update):
     try:
         path = await bot.download_media(
             message=file,
+            file_name=file_path,
             progress=progress_for_pyrogram,
             progress_args=("🚀 Downloading...  ⚡", ms, c_time)
         )
     except Exception as e:
         used_limit(update.from_user.id, used)
         await ms.edit(str(e))
+        return
+
+    if not path or not os.path.exists(path):
+        await ms.edit("❌ Download failed.")
         return
 
     # Metadata
@@ -311,12 +316,7 @@ async def aud(bot, update):
     else:
         await ms.edit("🚀 Processing...  ⚡")
 
-    try:
-        os.rename(path, file_path)
-    except Exception:
-        file_path = path
-
-    final_path = metadata_path if _bool_metadata and os.path.exists(metadata_path) else file_path
+    final_path = metadata_path if _bool_metadata and os.path.exists(metadata_path) else path
 
     # Duration
     duration = 0
@@ -372,4 +372,3 @@ async def aud(bot, update):
             if p and os.path.exists(p):
                 try: os.remove(p)
                 except: pass
-pass
